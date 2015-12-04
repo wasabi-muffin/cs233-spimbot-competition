@@ -45,6 +45,7 @@ puzzle_word: .space 128
 puzzle_grid: .space 8200 # rows + cols + puzzle gird so 8192 + 8
 requested_puzzle: .word 0
 # Stores the address for the next node to allocate
+.global new_node_address
 new_node_address: .word node_memory
 # Don't put anything below this just in case they malloc more than 4096
 node_memory: .space 4096
@@ -143,7 +144,9 @@ interrupt_handler:
 .set at
 	la	$k0, chunkIH
 	sw	$a0, 0($k0)		# Get some free registers                  
-	sw	$a1, 4($k0)		# by storing them to a global variable     
+	sw	$a1, 4($k0)		# by storing them to a global variable  
+	sw  $a2, 8($k0)
+	sw  $a3, 12($k0)   
 
 	mfc0	$k0, $13		# Get Cause register                       
 	srl	$a0, $k0, 2                
@@ -182,6 +185,13 @@ request_puzzle_interrupt:
 	lw $a2 0($k0)
 	lw $a3 4($k0)
 	jal search_neighbors
+	sw $v0 SUBMIT_SOLUTION
+	li $a0 0
+	sw $a0 requested_puzzle
+	la $a0 node_memory
+	sw $a0 new_node_address
+
+	j interrupt_dispatch
 	
 
 
